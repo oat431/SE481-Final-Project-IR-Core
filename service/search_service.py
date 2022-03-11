@@ -74,7 +74,7 @@ def search_by_instruciton(query):
 def search_recipe(query,type):
     misspelled = spell_checking(query)
     if len(misspelled) != 0:
-        return {"did-you-mean": [x for x in misspelled]}
+        return {"did_you_mean": [x for x in misspelled]}
 
     if type == 'ingredient':
         return search_by_ingreidents(query)
