@@ -1,28 +1,5 @@
 import pandas as pd
 
-from sklearn import preprocessing
-from sklearn import neighbors
-from sklearn import tree
-from sklearn import naive_bayes
-from sklearn import model_selection
-from sklearn import metrics
-
-from numpy import hstack
-
-import multiprocessing as mp
-
-import string
-
-import json
-import re
-
-import nltk
-from nltk import ngrams
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
-from sklearn.metrics.pairwise import cosine_similarity
-
 from model.bm25 import BM25
 from service.spell_checker_service import spell_checking
 
@@ -39,22 +16,71 @@ def search_by_bm25(query):
     return result.argsort()[-50:][::-1]
 
 
-def search_by_title(query):
-    misspelled = spell_checking(query)
-    if len(misspelled) != 0:
-        return {"did-you-mean": [x for x in misspelled]}
+def search_by_bm25_ingredient(ingredient):
+    result = bm25.transform(ingredient, food["Cleaned_Ingredients"].astype('U'))
+    return result.argsort()[-50:][::-1]
 
+
+def search_by_bm25_instruction(instr):
+    result = bm25.transform(instr, food["Instructions"].astype('U'))
+    return result.argsort()[-50:][::-1]
+
+
+def search_by_title(query):
     return_data = []
     result = search_by_bm25(query)
-    index = 0
     for i in result:
-        index += 1
         data = {
-            'id': index,
+            'id': int(i),
             'title': food.iloc[i].to_dict()["Title"],
-            'instructions': [x for x in str(food.iloc[i].to_dict()["Instructions"]).split('.')],
+            'instructions': [x.lstrip().strip("'") for x in str(food.iloc[i].to_dict()["Instructions"]).split('.')],
             'image_Name': food.iloc[i].to_dict()["Image_Name"],
-            'ingredients': [x for x in food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+            'ingredients': [x.lstrip().strip("'") for x in food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
         }
         return_data.append(data)
     return return_data
+
+
+def search_by_ingreidents(query):
+    return_data = []
+    result = search_by_bm25_ingredient(query)
+    for i in result:
+        data = {
+            'id': int(i),
+            'title': food.iloc[i].to_dict()["Title"],
+            'instructions': [x.lstrip().strip("'") for x in str(food.iloc[i].to_dict()["Instructions"]).split('.')],
+            'image_Name': food.iloc[i].to_dict()["Image_Name"],
+            'ingredients': [x.lstrip().strip("'") for x in food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+        }
+        return_data.append(data)
+    return return_data
+
+
+def search_by_instruciton(query):
+    return_data = []
+    result = search_by_bm25_instruction(query)
+    for i in result:
+        data = {
+            'id': int(i),
+            'title': food.iloc[i].to_dict()["Title"],
+            'instructions': [x.lstrip().strip("'") for x in str(food.iloc[i].to_dict()["Instructions"]).split('.')],
+            'image_Name': food.iloc[i].to_dict()["Image_Name"],
+            'ingredients': [x.lstrip().strip("'") for x in food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+        }
+        return_data.append(data)
+    return return_data
+
+
+def search_recipe(query,type):
+    misspelled = spell_checking(query)
+    if len(misspelled) != 0:
+        return {"did_you_mean": [x for x in misspelled]}
+
+    if type == 'ingredient':
+        return search_by_ingreidents(query)
+
+    if type == 'title':
+        return search_by_title(query)
+
+    if type == 'instruction':
+        return search_by_instruciton(query)
