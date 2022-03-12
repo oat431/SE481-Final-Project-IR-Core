@@ -84,3 +84,13 @@ def search_recipe(query,type):
 
     if type == 'instruction':
         return search_by_instruciton(query)
+
+
+def get_recipe_details(id):
+    return {
+            'id': int(id),
+            'title': food.iloc[id].to_dict()["Title"],
+            'instructions': [x.lstrip().strip("'") for x in str(food.iloc[id].to_dict()["Instructions"]).split('.')],
+            'image_Name': food.iloc[id].to_dict()["Image_Name"],
+            'ingredients': [x.lstrip().strip("'") for x in food.iloc[id].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+        }

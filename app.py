@@ -13,8 +13,13 @@ def get_all_songs():
 @app.route('/search-recipe', methods=['POST'])
 @cross_origin()
 def get_recipe_by_title():
-    print(jsonify(search_recipe(request.json['query'], request.json['type'])))
     return jsonify(search_recipe(request.json['query'], request.json['type']))
+
+
+@app.route('/recipe/<int:id>')
+@cross_origin()
+def get_recipe_by_id(id):
+    return jsonify(get_recipe_details(id))
 
 
 if __name__ == '__main__':
