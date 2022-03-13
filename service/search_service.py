@@ -4,11 +4,14 @@ from model.bm25 import BM25
 from service.spell_checker_service import spell_checking
 
 food = pd.read_csv('./data/food.csv')
-food.drop('Unnamed: 0', axis='columns',inplace=True)
-food.drop('Ingredients', axis='columns',inplace=True)
+food.drop('Unnamed: 0', axis='columns', inplace=True)
+food.drop('Ingredients', axis='columns', inplace=True)
 
 bm25 = BM25()
 bm25.fit(food["Title"].astype('U'))
+mark25 = BM25()
+
+mark = []
 
 
 def search_by_bm25(query):
@@ -35,7 +38,8 @@ def search_by_title(query):
             'title': food.iloc[i].to_dict()["Title"],
             'instructions': [x.lstrip().strip("'") for x in str(food.iloc[i].to_dict()["Instructions"]).split('.')],
             'image_Name': food.iloc[i].to_dict()["Image_Name"],
-            'ingredients': [x.lstrip().strip("'") for x in food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+            'ingredients': [x.lstrip().strip("'") for x in
+                            food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
         }
         return_data.append(data)
     return return_data
@@ -50,7 +54,8 @@ def search_by_ingreidents(query):
             'title': food.iloc[i].to_dict()["Title"],
             'instructions': [x.lstrip().strip("'") for x in str(food.iloc[i].to_dict()["Instructions"]).split('.')],
             'image_Name': food.iloc[i].to_dict()["Image_Name"],
-            'ingredients': [x.lstrip().strip("'") for x in food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+            'ingredients': [x.lstrip().strip("'") for x in
+                            food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
         }
         return_data.append(data)
     return return_data
@@ -65,13 +70,14 @@ def search_by_instruciton(query):
             'title': food.iloc[i].to_dict()["Title"],
             'instructions': [x.lstrip().strip("'") for x in str(food.iloc[i].to_dict()["Instructions"]).split('.')],
             'image_Name': food.iloc[i].to_dict()["Image_Name"],
-            'ingredients': [x.lstrip().strip("'") for x in food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+            'ingredients': [x.lstrip().strip("'") for x in
+                            food.iloc[i].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
         }
         return_data.append(data)
     return return_data
 
 
-def search_recipe(query,type):
+def search_recipe(query, type):
     misspelled = spell_checking(query)
     if len(misspelled) != 0:
         return {"did_you_mean": [x for x in misspelled]}
@@ -88,9 +94,43 @@ def search_recipe(query,type):
 
 def get_recipe_details(id):
     return {
-            'id': int(id),
-            'title': food.iloc[id].to_dict()["Title"],
-            'instructions': [x.lstrip().strip("'") for x in str(food.iloc[id].to_dict()["Instructions"]).split('.')],
-            'image_Name': food.iloc[id].to_dict()["Image_Name"],
-            'ingredients': [x.lstrip().strip("'") for x in food.iloc[id].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+        'id': int(id),
+        'title': food.iloc[id].to_dict()["Title"],
+        'instructions': [x.lstrip().strip("'") for x in str(food.iloc[id].to_dict()["Instructions"]).split('.')],
+        'image_Name': food.iloc[id].to_dict()["Image_Name"],
+        'ingredients': [x.lstrip().strip("'") for x in
+                        food.iloc[id].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+    }
+
+
+def get_mark_recipe(li):
+    for i in li:
+        index = int(i)
+        data = {
+            'id': index,
+            'title': food.iloc[index].to_dict()["Title"],
+            'instructions': [x.lstrip().strip("'") for x in str(food.iloc[index].to_dict()["Instructions"]).split('.')],
+            'image_Name': food.iloc[index].to_dict()["Image_Name"],
+            'ingredients': [x.lstrip().strip("'") for x in
+                            food.iloc[index].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
         }
+        mark.append(data)
+    return mark
+
+
+def search_mark_recipe(query):
+    mark_recipe = pd.DataFrame(mark)
+    mark25.fit(mark_recipe["Title"].astype('U'))
+    result = bm25.transform(query, food["Title"].astype('U'))
+    for i in result.argsort()[::-1]:
+        index = int(i)
+        data = {
+            'id': index,
+            'title': food.iloc[index].to_dict()["Title"],
+            'instructions': [x.lstrip().strip("'") for x in str(food.iloc[index].to_dict()["Instructions"]).split('.')],
+            'image_Name': food.iloc[index].to_dict()["Image_Name"],
+            'ingredients': [x.lstrip().strip("'") for x in
+                            food.iloc[index].to_dict()["Cleaned_Ingredients"].strip("][").split(',')],
+        }
+        mark.append(data)
+    return mark
